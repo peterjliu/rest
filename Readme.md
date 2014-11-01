@@ -27,7 +27,7 @@ func main() {
 	// Get short url for long url
 	var answer UrlShortenerResp
 	url := "https://www.googleapis.com/urlshortener/v1/url?shortUrl=http://goo.gl/fbsS"
-	err := rest.Get(url, &answer)
+	err := rest.Get(url, nil, &answer)
 	if err != nil {
 		fmt.Print(err)
 	}
