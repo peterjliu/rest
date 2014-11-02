@@ -16,42 +16,25 @@ func Post(url string, hdrs map[string]string, input interface{}, output interfac
 	if err != nil {
 		return err
 	}
-
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
-	if err != nil {
-		return err
+	r := Request{
+		Method:  POST,
+		Headers: hdrs,
+		Url:     url,
+		Data:    data,
 	}
-
-	req.Header.Set("Content-Type", "application/json")
-	for k, v := range hdrs {
-		req.Header.Set(k, v)
-	}
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	return parseResp(resp, &output)
+	r.AddHeader("Content-Type", "application/json")
+	return r.Do(&output)
 }
 
 // Make a GET request parses response into output struct.
 // HTTP headers, hdrs, are optional.
 func Get(url string, hdrs map[string]string, output interface{}) error {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return err
+	r := Request{
+		Method:  GET,
+		Headers: hdrs,
+		Url:     url,
 	}
-	for k, v := range hdrs {
-		req.Header.Set(k, v)
-	}
-	client := &http.Client{}
-	resp, err := client.Do(req)
-
-	if err != nil {
-		return err
-	}
-
-	return parseResp(resp, &output)
+	return r.Do(&output)
 }
 
 // Parse a json http response into a struc and closes the Body.
@@ -59,7 +42,7 @@ func parseResp(resp *http.Response, output interface{}) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return errors.New(fmt.Sprintf("Http error status code %d", resp.StatusCode))
+		return errors.New(fmt.Sprintf("Http error status code %d\n", resp.StatusCode))
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -72,4 +55,52 @@ func parseResp(resp *http.Response, output interface{}) error {
 		return err
 	}
 	return nil
+}
+
+type Httpmethod int
+
+const (
+	GET Httpmethod = iota
+	POST
+	PUT
+	DELETE
+)
+
+type Request struct {
+	Method  Httpmethod
+	Headers map[string]string
+	Url     string
+	Data    []byte
+}
+
+func (r *Request) AddHeader(k, v string) {
+	if r.Headers == nil {
+		r.Headers = make(map[string]string)
+	}
+	r.Headers[k] = v
+}
+
+func (r Request) Do(v interface{}) error {
+	var req *http.Request
+	var err error
+	switch r.Method {
+	case GET:
+		req, err = http.NewRequest("GET", r.Url, nil)
+	case POST:
+		req, err = http.NewRequest("POST", r.Url, bytes.NewBuffer(r.Data))
+	}
+	if err != nil {
+		return err
+	}
+	for k, v := range r.Headers {
+		req.Header.Add(k, v)
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return err
+	}
+
+	return parseResp(resp, &v)
 }
