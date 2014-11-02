@@ -20,8 +20,11 @@ type UrlShortenerResp struct {
 func main() {
 	// Get short url for long url
 	var answer UrlShortenerResp
-	err := rest.Post("https://www.googleapis.com/urlshortener/v1/url", nil,
-		UrlShortenerReq{LongUrl: "http://www.google.com"}, &answer)
+	err := rest.Post(
+		"https://www.googleapis.com/urlshortener/v1/url",
+		nil,
+		UrlShortenerReq{LongUrl: "http://www.google.com"},
+		&answer)
 	if err != nil {
 		fmt.Print(err)
 	}
@@ -30,8 +33,10 @@ func main() {
 
 	// Get long url for a short url
 	answer = UrlShortenerResp{}
-	err = rest.Get("https://www.googleapis.com/urlshortener/v1/url?shortUrl=http://goo.gl/fbsS",
-		nil, &answer)
+	err = rest.Get(
+		"https://www.googleapis.com/urlshortener/v1/url?shortUrl=http://goo.gl/fbsS",
+		nil,
+		&answer)
 	if err != nil {
 		fmt.Print(err)
 	}
